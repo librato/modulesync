@@ -61,12 +61,12 @@ class Hash
     # to Hash.merge's default behavior, see https://apidock.com/ruby/Hash/merge
     # Also, note that this method does not recursively process hashes when they are
     # array elements
-    def smart_merge(h1, h2)
-      h1.merge(h2) do |key, old, new|
+    def smart_merge(new_hash)
+      self.merge(new_hash) do |key, old, new|
         if old.class != new.class
           new
         elsif (old.is_a? Hash)
-          smart_merge(old, new)
+          old.smart_merge(new)
         elsif (old.is_a? Array)
           (old + new).uniq
         elsif (old.is_a? String) || (old.is_a? Numeric)
