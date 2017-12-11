@@ -22,7 +22,32 @@ module ModuleSync
       file_md  = lookup_config(module_defaults, target_name)
       file_mc  = lookup_config(module_configs, target_name)
 
-      global_defaults.merge(file_def).merge(file_md).merge(file_mc).merge(additional_settings)
+      global_defaults.smart_merge(file_def).smart_merge(file_md).smart_merge(file_mc).smart_merge(additional_settings)
+    end
+
+    # Merge two hashes according to the following rules for duplicate keys:
+    # 1. If the values don't match, take the new hash's value
+    # 2. If the values are hashes merge recursively
+    # 3. If the values are arrays, take their union minus duplicates
+    # 4. If the values are scalars, take the new hash's value
+    # The idea is that generally, with matching hash keys we want to replace scalar values and
+    # combine array values e.g. add the module's config list to a global list
+    # TODO: add fancier logic e.g. set an "override" flag which sticks
+    # to Hash.merge's default behavior, see https://apidock.com/ruby/Hash/merge
+    # Also, note that this method does not recursively process hashes when they are
+    # array elements
+    def smart_merge(h1, h2)
+      h1.merge(h2) do |key, old, new|
+        if old.class != new.class
+          new
+        elsif (old.is_a? Hash)
+          smart_merge(old, new)
+        elsif (old.is_a? Array)
+          (old + new).uniq
+        elsif (old.is_a? String) || (old.is_a? Numeric)
+          new
+        end
+      end
     end
 
     def managed?(target_name)
