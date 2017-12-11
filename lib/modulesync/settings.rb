@@ -25,6 +25,31 @@ module ModuleSync
       global_defaults.smart_merge(file_def).smart_merge(file_md).smart_merge(file_mc).smart_merge(additional_settings)
     end
 
+    def managed?(target_name)
+      Pathname.new(target_name).ascend do |v|
+        configs = build_file_configs(v.to_s)
+        return false if configs['unmanaged']
+      end
+      true
+    end
+
+    # given a list of templates in the repo, return everything that we might want to act on
+    def managed_files(target_name_list)
+      (target_name_list | defaults.keys | module_configs.keys).select do |f|
+        (f != ModuleSync::GLOBAL_DEFAULTS_KEY) && managed?(f)
+      end
+    end
+
+    # returns a list of templates that should not be touched
+    def unmanaged_files(target_name_list)
+      (target_name_list | defaults.keys | module_configs.keys).select do |f|
+        (f != ModuleSync::GLOBAL_DEFAULTS_KEY) && !managed?(f)
+      end
+    end
+  end
+end
+
+class Hash
     # Merge two hashes according to the following rules for duplicate keys:
     # 1. If the values don't match, take the new hash's value
     # 2. If the values are hashes merge recursively
@@ -49,27 +74,4 @@ module ModuleSync
         end
       end
     end
-
-    def managed?(target_name)
-      Pathname.new(target_name).ascend do |v|
-        configs = build_file_configs(v.to_s)
-        return false if configs['unmanaged']
-      end
-      true
-    end
-
-    # given a list of templates in the repo, return everything that we might want to act on
-    def managed_files(target_name_list)
-      (target_name_list | defaults.keys | module_configs.keys).select do |f|
-        (f != ModuleSync::GLOBAL_DEFAULTS_KEY) && managed?(f)
-      end
-    end
-
-    # returns a list of templates that should not be touched
-    def unmanaged_files(target_name_list)
-      (target_name_list | defaults.keys | module_configs.keys).select do |f|
-        (f != ModuleSync::GLOBAL_DEFAULTS_KEY) && !managed?(f)
-      end
-    end
-  end
 end
