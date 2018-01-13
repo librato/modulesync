@@ -51,10 +51,9 @@ end
 
 class Hash
     # Merge two hashes according to the following rules for duplicate keys:
-    # 1. If the values don't match, take the new hash's value
+    # 1. If the values are scalars and don't match, take the new hash's value
     # 2. If the values are hashes merge recursively
-    # 3. If the values are arrays, take their union minus duplicates
-    # 4. If the values are scalars, take the new hash's value
+    # 3. If the values are arrays, take their union, removing any duplicate entries
     # The idea is that generally, with matching hash keys we want to replace scalar values and
     # combine array values e.g. add the module's config list to a global list
     # TODO: add fancier logic e.g. set an "override" flag which sticks
